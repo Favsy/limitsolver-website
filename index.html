@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Limit Solver</title>
+    <style>
+        /* CSS Tema Futuristik */
+        :root {
+            --neon-cyan: #0ff;
+            --dark-bg: #050505;
+            --glass-bg: rgba(15, 25, 35, 0.7);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: white;
+            font-family: 'Courier New', Courier, monospace; /* Kesan Hacking/Sci-fi */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, var(--dark-bg) 100%);
+        }
+
+        .container {
+            background: var(--glass-bg);
+            padding: 40px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1), inset 0 0 20px rgba(0, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--neon-cyan);
+            color: white;
+            font-family: inherit;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            box-shadow: 0 10px 10px -10px var(--neon-cyan);
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+
+        #hasil-container {
+            margin-top: 30px;
+            padding: 15px;
+            border-left: 3px solid var(--neon-cyan);
+            background: rgba(0, 255, 255, 0.05);
+            display: none; /* Disembunyikan sebelum ada hasil */
+            text-align: left;
+        }
+
+        .label { font-size: 0.8em; color: #888; }
+        .value { font-size: 1.2em; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>LIMIT SOLVER</h1>
+        
+        <input type="text" id="inputFungsi" placeholder="Masukkan fungsi (misal: (x^2 - 1))">
+        <input type="text" id="inputVariabel" placeholder="Variabel (misal: x)" value="x">
+        <input type="text" id="inputMenuju" placeholder="Mendekati nilai (misal: 1)">
+        
+        <button onclick="hitungLimit()">Eksekusi</button>
+
+        <div id="hasil-container">
+            <div class="label">STATUS:</div>
+            <div class="value" id="teksStatus" style="color: #0f0;">...</div>
+            
+            <div class="label">LANGKAH EVALUASI:</div>
+            <div class="value" id="teksLangkah">...</div>
+            
+            <div class="label">HASIL AKHIR:</div>
+            <div class="value" id="teksHasil" style="color: var(--neon-cyan); font-weight: bold; font-size: 1.5em;">...</div>
+        </div>
+    </div>
+
+    <script>
+        async function hitungLimit() {
+            const fungsi = document.getElementById('inputFungsi').value.trim();
+            const variabel = document.getElementById('inputVariabel').value.trim();
+            const menuju = document.getElementById('inputMenuju').value.trim();
+            
+            const kontainerHasil = document.getElementById('hasil-container');
+            const teksHasil = document.getElementById('teksHasil');
+            const teksLangkah = document.getElementById('teksLangkah');
+            const teksStatus = document.getElementById('teksStatus'); // Mengambil elemen status baru
+
+            // 1. JIKA INPUT KOSONG
+            if (fungsi === "" || variabel === "" || menuju === "") {
+                kontainerHasil.style.display = 'block';
+                teksStatus.innerText = "INPUT KOSONG";
+                teksStatus.style.color = "orange";
+                teksLangkah.innerText = "PERINGATAN SISTEM";
+                teksHasil.innerText = "Harap isi fungsi dan nilai limit terlebih dahulu!";
+                teksHasil.style.color = "orange";
+                return; 
+            }
+
+            // 2. SAAT LOADING / MEMPROSES
+            kontainerHasil.style.display = 'block';
+            teksStatus.innerText = "PROCESSING_DATA...";
+            teksStatus.style.color = "yellow";
+            teksHasil.style.color = "var(--neon-cyan)"; 
+            teksHasil.innerText = "Memproses...";
+            teksLangkah.innerText = "Menganalisis matriks persamaan...";
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/hitung-limit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fungsi: fungsi,
+                        variabel: variabel,
+                        menuju: menuju
+                    })
+                });
+
+                const data = await response.json();
+
+                // 3. JIKA SUKSES DIHITUNG OLEH BACKEND
+                if (data.sukses) {
+                    teksStatus.innerText = "CALCULATED_SUCCESSFULLY";
+                    teksStatus.style.color = "#0f0"; // Warna hijau
+                    teksLangkah.innerText = "Operasi Selesai. " + data.langkah_awal;
+                    teksHasil.innerText = data.hasil;
+                    teksHasil.style.color = "var(--neon-cyan)";
+                } 
+                // 4. JIKA ERROR DARI BACKEND (MISAL: SALAH KETIK RUMUS)
+                else {
+                    teksStatus.innerText = "CALCULATION_FAILED";
+                    teksStatus.style.color = "red";
+                    teksLangkah.innerText = "SYNTAX_ERROR";
+                    teksHasil.innerText = "Format fungsi tidak dikenali oleh SymPy.";
+                    teksHasil.style.color = "red";
+                }
+            } catch (error) {
+                // 5. JIKA BACKEND MATI / KONEKSI GAGAL
+                teksStatus.innerText = "CONNECTION_LOST";
+                teksStatus.style.color = "red";
+                teksLangkah.innerText = "KONEKSI GAGAL";
+                teksHasil.innerText = "Backend tidak merespons. Pastikan server Uvicorn menyala.";
+                teksHasil.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>
