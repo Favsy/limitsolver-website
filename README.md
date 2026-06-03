@@ -1,7 +1,7 @@
 # LIMIT SOLVER
 
 LIMIT SOLVER adalah  web yang dirancang khusus untuk menyelesaikan soal-soal kalkulus, khususnya limit fungsi matematika. 
-Proyek ini merupakan proyek iseng dan kemungkinan masih banyak bug yang terkandung di dalamnya
+Proyek ini merupakan proyek iseng dan kemungkinan masih banyak bug.
 
 ## Teknologi yang Digunakan
 
